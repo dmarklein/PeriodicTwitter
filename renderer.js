@@ -1,21 +1,26 @@
 // This file is required by the index.html file and will
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
-  var Twitter = require('twitter');
-  var client = new Twitter({
-    consumer_key: process.env.TWITTER_CONSUMER_KEY,
-    consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
-    access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
-    access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
-  });
+var Twitter = require('twitter');
+var client = new Twitter({
+  consumer_key: process.env.TWITTER_CONSUMER_KEY,
+  consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+  access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
+  access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
+});
 
-  client.get('search/tweets', {q: "amazon web services"}, function(error, tweets, response) {
+var searchTerm = "puppies";
+updateTweetsPeriodically(searchTerm, 20000);
+
+function updateTweets(searchTerm)
+{
+  client.get('search/tweets', {q: searchTerm}, function(error, tweets, response) {
     if(error) throw error;
     //console.log("tweets...");
     //console.log(tweets);  // The favorites. 
 
-
-    var body = document.getElementById("body");
+    var tweetsContainer = document.getElementById("tweets-container");
+    tweetsContainer.innerHTML = "";
     for (var i in tweets.statuses)
     {
       var tweet = tweets.statuses[i];
@@ -24,6 +29,8 @@
 
       var tweetElem = document.createElement("div");
       tweetElem.className += tweetElem.className ? ' panel' : 'panel';
+      tweetElem.className += tweetElem.className ? ' panel-body' : 'panel-body';
+
 
       if (tweet.user != null && tweet.user !== undefined)
       {
@@ -46,8 +53,14 @@
       var tweetText = document.createTextNode(tweet.text);
       tweetTextDiv.appendChild(tweetText);
       tweetElem.appendChild(tweetTextDiv);
-      body.appendChild(tweetElem);
+      tweetsContainer.appendChild(tweetElem);
     }
   });
+}
 
+function updateTweetsPeriodically(searchTerm, milliseconds)
+{
+  updateTweets(searchTerm);
+  window.setTimeout(function() {updateTweetsPeriodically(searchTerm, milliseconds);}, milliseconds);
+}
 
