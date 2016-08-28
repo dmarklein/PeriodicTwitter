@@ -8,12 +8,15 @@ var client = new Twitter({
   access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 });
+var timeout;
 
-var searchTerm = "puppies";
-updateTweetsPeriodically(searchTerm, 20000);
+var searchTerm;
+var PERIOD = 20000;
+//updateTweetsPeriodically(searchTerm, PERIOD);
 
 function updateTweets(searchTerm)
 {
+  console.log("fetching results for search term: " + searchTerm);
   client.get('search/tweets', {q: searchTerm}, function(error, tweets, response) {
     if(error) throw error;
     //console.log("tweets...");
@@ -35,15 +38,22 @@ function updateTweets(searchTerm)
       if (tweet.user != null && tweet.user !== undefined)
       {
         var tweetUserDiv = document.createElement("div");
+              
+        tweetUserDiv.className += tweetUserDiv.className ? ' row' : 'row';
+
         if (tweet.user.profile_image_url != null && tweet.user.profile_image_url !== undefined)
         {
+          var tweetUserImgDiv = document.createElement("div");
+          tweetUserImgDiv.className += tweetUserImgDiv.className ? ' col-xs-2' : 'col-xs-2';
           var tweetUserImg = document.createElement("img");
           tweetUserImg.src = tweet.user.profile_image_url;
-          tweetUserDiv.appendChild(tweetUserImg);
+          tweetUserImgDiv.appendChild(tweetUserImg);
+          tweetUserDiv.appendChild(tweetUserImgDiv);
         }
 
-        var tweetUserName = document.createElement("h4");
-        var tweetUserNameText = tweet.user.name + " - "+"<a target='_blank' href='https://twitter.com/"+tweet.user.screen_name+"'>"+tweet.user.screen_name+"</a>";
+        var tweetUserName = document.createElement("div");
+        tweetUserName.className += tweetUserName.className ? ' col-xs-6' : 'col-xs-6';
+        var tweetUserNameText = "<strong><a target='_blank' href='https://twitter.com/"+tweet.user.screen_name+"'>"+tweet.user.screen_name+"</a></strong>";
         tweetUserName.innerHTML = tweetUserNameText;
         tweetUserDiv.appendChild(tweetUserName);
         tweetElem.appendChild(tweetUserDiv);
@@ -61,6 +71,22 @@ function updateTweets(searchTerm)
 function updateTweetsPeriodically(searchTerm, milliseconds)
 {
   updateTweets(searchTerm);
-  window.setTimeout(function() {updateTweetsPeriodically(searchTerm, milliseconds);}, milliseconds);
+  timeout = window.setTimeout(
+    function()
+    {
+      updateTweetsPeriodically(searchTerm, milliseconds);
+    }
+    , milliseconds);
 }
+
+$("#search-button").click(
+  function() 
+  {
+    searchTerm = $("#search-box").val();
+    console.log("searching for: " + searchTerm);
+    window.clearTimeout(timeout);
+    updateTweetsPeriodically(searchTerm, PERIOD);
+  }
+
+);
 
